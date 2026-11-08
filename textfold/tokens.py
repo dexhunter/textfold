@@ -111,7 +111,9 @@ def norm(tok, atoms):
         return "atom:" + re.sub(r"\s+", "", atoms.get(tok["a"], {}).get("alt", tok["a"]))
     if "x" in tok:
         return "atom:" + re.sub(r"\s+", "", tok["x"])
-    w = re.sub(rf"[^\w{MARKS}]", "", (tok.get("t") or "").lower())   # (a vowel sign or tone mark is part of its syllable)
+    w = (tok.get("t") or "").lower()
+    if not w.isalnum():   # isalnum() is re's \w less "_": only then is there anything to strip
+        w = re.sub(rf"[^\w{MARKS}]", "", w)   # (a vowel sign or tone mark is part of its syllable)
     if not w or w in STOP:
         return ""
     if len(w) > 3 and w.endswith("s") and not w.endswith("ss"):
