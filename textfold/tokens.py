@@ -56,16 +56,19 @@ def is_cjk(s):
 def tokenize_text(text, font=None, out=None):
     """Append the tokens of a plain string to out; whitespace marks the previous token."""
     out = [] if out is None else out
-    for m in re.finditer(r"\s+|" + WORD.pattern, text):
-        piece = m.group(0)
-        if piece.isspace():
-            if out:
-                out[-1]["s"] = 1
-            continue
-        tok = {"t": piece}
-        if font:
-            tok["f"] = font
-        out.append(tok)
+    chunks = str.split(text)   # str.split agrees with \s, and no token spans whitespace
+    if out and text[:1].isspace():
+        out[-1]["s"] = 1
+    pieces_of = {}   # a word recurs often in a long text: cut each distinct chunk once
+    for chunk in chunks:
+        pieces = pieces_of.get(chunk)
+        if pieces is None:
+            # an ASCII letters-and-digits chunk is one word whole; skip the regex for it
+            pieces = pieces_of[chunk] = [chunk] if chunk.isascii() and chunk.isalnum() else WORD.findall(chunk)
+        out.extend([{"t": p, "f": font} for p in pieces] if font else [{"t": p} for p in pieces])
+        out[-1]["s"] = 1
+    if chunks and not text[-1:].isspace():
+        del out[-1]["s"]
     return out
 
 
