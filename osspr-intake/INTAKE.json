@@ -1,0 +1,77 @@
+{
+  "method": "python3 osspr-intake/harness/bench.py <target> times that function only, after building inputs. baseline_median_ms is the median of 11 samples following 3 warmups. baseline_noise_pct is pstdev/median*100. The cyclic GC is collected between samples and disabled during each sample. Measured on upstream main e4e41c33c7a31c6f02aa38db643ec31cc338208a. semantic.normalize is excluded (merged in chenxiachan/textfold#118). No open upstream performance PR covers these functions.",
+  "targets": [
+    {
+      "upstream_repo": "https://github.com/chenxiachan/textfold",
+      "head_sha": "e4e41c33c7a31c6f02aa38db643ec31cc338208a",
+      "file": "textfold/ladder.py",
+      "function": "_cjk_share",
+      "native_test_cmd": "python3 -m unittest tests.test_cjk tests.test_chinese_brief",
+      "baseline_median_ms": 33.88,
+      "tests_pass_on_baseline": true,
+      "bench_cmd": "python3 osspr-intake/harness/bench.py cjk_share",
+      "baseline_noise_pct": 0.87,
+      "workload": "400 English paragraphs, one _cjk_share call each, matching ladder.budgets_of on a 400-unit import. Each character calls tokens.is_cjk, which recompiles a regex."
+    },
+    {
+      "upstream_repo": "https://github.com/chenxiachan/textfold",
+      "head_sha": "e4e41c33c7a31c6f02aa38db643ec31cc338208a",
+      "file": "textfold/tokens.py",
+      "function": "tokenize_text",
+      "native_test_cmd": "python3 -m unittest tests.test_tokens tests.test_devanagari tests.test_thai",
+      "baseline_median_ms": 17.436,
+      "tests_pass_on_baseline": true,
+      "bench_cmd": "python3 osspr-intake/harness/bench.py tokenize_text",
+      "baseline_noise_pct": 3.27,
+      "workload": "One tokenize_text call on the same 400 paragraphs joined. The WORD regex carries every combining-mark range from tokens._marks."
+    },
+    {
+      "upstream_repo": "https://github.com/chenxiachan/textfold",
+      "head_sha": "e4e41c33c7a31c6f02aa38db643ec31cc338208a",
+      "file": "textfold/tokens.py",
+      "function": "lcs_pairs",
+      "native_test_cmd": "python3 -m unittest tests.test_cjk tests.test_chinese_brief",
+      "baseline_median_ms": 73.044,
+      "tests_pass_on_baseline": true,
+      "bench_cmd": "python3 osspr-intake/harness/bench.py lcs_pairs",
+      "baseline_noise_pct": 5.84,
+      "workload": "Four unsplit CJK paragraphs of 2500 characters. Each call is lcs_pairs of the first 60 normalised tokens against the whole paragraph, the shape of ladder.align. CJK units are not cut by sentence count."
+    },
+    {
+      "upstream_repo": "https://github.com/chenxiachan/textfold",
+      "head_sha": "e4e41c33c7a31c6f02aa38db643ec31cc338208a",
+      "file": "textfold/tokens.py",
+      "function": "norm",
+      "native_test_cmd": "python3 -m unittest tests.test_thai",
+      "baseline_median_ms": 21.468,
+      "tests_pass_on_baseline": true,
+      "bench_cmd": "python3 osspr-intake/harness/bench.py norm",
+      "baseline_noise_pct": 1.36,
+      "workload": "tokens.norm on every token of the 400-paragraph book. align calls norm on the brief and on the evidence tokens before lcs_pairs. Each call runs re.sub with the combining-mark class."
+    },
+    {
+      "upstream_repo": "https://github.com/chenxiachan/textfold",
+      "head_sha": "e4e41c33c7a31c6f02aa38db643ec31cc338208a",
+      "file": "textfold/semantic.py",
+      "function": "tex_math",
+      "native_test_cmd": "python3 -m unittest tests.test_omml_text tests.test_typora_math tests.test_markdown_equations",
+      "baseline_median_ms": 129.257,
+      "tests_pass_on_baseline": true,
+      "bench_cmd": "python3 osspr-intake/harness/bench.py tex_math",
+      "baseline_noise_pct": 0.29,
+      "workload": "160 distinct display formulas. tex_math is separate from normalize (pull 118 changed tree walks in normalize, not this converter). Each call parses LaTeX and builds a BeautifulSoup math element."
+    },
+    {
+      "upstream_repo": "https://github.com/chenxiachan/textfold",
+      "head_sha": "e4e41c33c7a31c6f02aa38db643ec31cc338208a",
+      "file": "textfold/langs.py",
+      "function": "detect",
+      "native_test_cmd": "python3 -m unittest tests.test_text_language",
+      "baseline_median_ms": 106.777,
+      "tests_pass_on_baseline": true,
+      "bench_cmd": "python3 osspr-intake/harness/bench.py detect",
+      "baseline_noise_pct": 0.93,
+      "workload": "24 texts already sliced to detect's 40_000-character cap (English, Chinese, German, French, repeated). detect scans the text once per script regex and, for Latin, scores every word against each language's small-word list."
+    }
+  ]
+}
